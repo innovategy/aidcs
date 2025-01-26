@@ -185,7 +185,9 @@ Environment variables must be configured in the deployment platform.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## License
+Commercial License
+Copyright (c) 2025 Innovategy Oy. All rights reserved.
 
 ## Support
 
