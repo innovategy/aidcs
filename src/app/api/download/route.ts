@@ -1,6 +1,6 @@
 // /src/app/api/download/route.ts
 import { NextResponse } from 'next/server';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { logger } from '@/utils/logger';
 
 export async function POST(request: Request) {
@@ -20,8 +20,9 @@ export async function POST(request: Request) {
             sampleRecord: records[0]
         });
 
-        // Create workbook with specific options
-        const workbook = XLSX.utils.book_new();
+        // Create workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Employee Records');
 
         // Transform the records for Excel
         const data = records.map((record, index) => {
@@ -62,30 +63,16 @@ export async function POST(request: Request) {
             return row;
         });
 
-        // Create worksheet
-        const worksheet = XLSX.utils.json_to_sheet(data, {
-            header: Object.keys(data[0]),
-            cellStyles: true,
-        });
+        // Add header row
+        worksheet.columns = Object.keys(data[0]).map(key => ({ header: key, key, width: 20 }));
+        // Add data rows
+        data.forEach(row => worksheet.addRow(row));
 
-        // Set column widths
-        const colWidths = Object.keys(data[0]).map(() => ({ wch: 20 }));
-        worksheet['!cols'] = colWidths;
-
-        // Add worksheet to workbook
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Employee Records');
-
-        // Generate Excel file with specific options
-        const excelBuffer = XLSX.write(workbook, {
-            type: 'buffer',
-            bookType: 'xlsx',
-            cellStyles: true,
-            cellDates: true,
-            dateNF: 'MM/DD/YYYY'
-        });
+        // Generate Excel file as buffer
+        const excelBuffer = await workbook.xlsx.writeBuffer();
 
         // Return the Excel file
-        return new NextResponse(excelBuffer, {
+        return new NextResponse(Buffer.from(excelBuffer), {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Content-Disposition': 'attachment; filename="employee_records.xlsx"'

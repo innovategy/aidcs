@@ -1,7 +1,7 @@
 // /src/services/file/excelProcessor.ts
 // Service for processing Excel files using SheetJS
 // /src/services/file/excelProcessor.ts
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { EmployeeRecord } from '@/types/employee/EmployeeRecord';
 import { logger } from '@/utils/logger';
 
@@ -18,13 +18,8 @@ interface ProcessingError {
 
 export async function processExcelFile(buffer: ArrayBuffer): Promise<ProcessingResult> {
     try {
-        const workbook = XLSX.read(buffer, {
-            type: 'array',
-            cellDates: true,
-            cellNF: true,
-            cellText: false,
-            dateNF: 'MM/DD/YYYY'
-        });
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(Buffer.from(buffer));
 
         const result: ProcessingResult = {
             records: [],
@@ -32,34 +27,32 @@ export async function processExcelFile(buffer: ArrayBuffer): Promise<ProcessingR
         };
 
         // Process each sheet in the workbook
-        workbook.SheetNames.forEach(sheetName => {
-            const worksheet = workbook.Sheets[sheetName];
+        workbook.worksheets.forEach(worksheet => {
+            const sheetName = worksheet.name;
+            const jsonData: any[] = [];
+            let headers: string[] = [];
 
-            // Get the data with specific options
-            const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-                raw: false,
-                dateNF: 'MM/DD/YYYY',
-                defval: '',  // Default value for empty cells
-                blankrows: false
+            worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                if (rowNumber === 1) {
+                    headers = row.values.slice(1) as string[]; // skip first empty value
+                    logger.debug('Excel Import', 'Processing headers', { headers });
+                } else {
+                    const rowData: any = {};
+                    row.values.slice(1).forEach((cell, i) => {
+                        rowData[headers[i]] = cell;
+                    });
+                    jsonData.push(rowData);
+                }
             });
-
-            // Log headers for debugging
-            if (jsonData.length > 0) {
-                logger.debug('Excel Import', 'Processing headers', {
-                    headers: Object.keys(jsonData[0])
-                });
-            }
 
             jsonData.forEach((row: any, index: number) => {
                 try {
-                    // Log raw row data for debugging
                     logger.debug('Excel Import', `Processing row ${index + 1}`, {
                         rawData: row
                     });
 
                     const record = normalizeRecord(row);
 
-                    // Log normalized record for debugging
                     logger.debug('Excel Import', `Normalized row ${index + 1}`, {
                         normalizedData: record
                     });

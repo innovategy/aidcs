@@ -5,6 +5,7 @@ A Next.js-based web application for validating and cleansing employee data using
 ## Features
 
 - 📤 Drag-and-drop file upload interface
+- 🧪 **Try it out:** You can load the included example file [`employee_records.xlsx`](./employee_records.xlsx) to test the application functionality.
 - 🤖 AI-powered data validation and cleansing
 - 🔍 Fuzzy duplicate detection with configurable thresholds
 - 📊 Interactive data grid with inline editing
@@ -186,8 +187,7 @@ Environment variables must be configured in the deployment platform.
 ## License
 
 ## License
-Commercial License
-Copyright (c) 2025 Innovategy Oy. All rights reserved.
+2025 by Innovategy Oy is licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ## Support
 
